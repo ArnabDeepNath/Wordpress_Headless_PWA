@@ -2,6 +2,19 @@ import { client } from "../lib/apollo";
 import { gql } from "@apollo/client";
 import CreatePostButton from "./components/CreatePostButton"; // We'll create this next
 
+interface Post {
+  id: string;
+  title: string;
+  date: string;
+  excerpt: string;
+}
+
+interface PostsData {
+  posts: {
+    nodes: Post[];
+  };
+}
+
 const GET_POSTS = gql`
   query GetPosts {
     posts(first: 10, where: { status: PUBLISH }) {
@@ -16,7 +29,7 @@ const GET_POSTS = gql`
 `;
 
 export default async function Home() {
-  const { data } = await client.query({
+  const { data } = await client.query<PostsData>({
     query: GET_POSTS,
     context: {
       fetchOptions: {
@@ -41,7 +54,7 @@ export default async function Home() {
 
       <div className="space-y-4">
         {data.posts.nodes.length > 0 ? (
-          data.posts.nodes.map((post: any) => (
+          data.posts.nodes.map((post) => (
             <div
               key={post.id}
               className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all"
