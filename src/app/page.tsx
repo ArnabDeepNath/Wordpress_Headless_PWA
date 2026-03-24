@@ -1,6 +1,4 @@
-import { client } from "../lib/apollo";
-import { gql } from "@apollo/client";
-import CreatePostButton from "./components/CreatePostButton"; // We'll create this next
+import CreatePostButton from "./components/CreatePostButton";
 
 interface Post {
   id: string;
@@ -9,34 +7,37 @@ interface Post {
   excerpt: string;
 }
 
-interface PostsData {
-  posts: {
-    nodes: Post[];
-  };
+const WORDPRESS_API_URL =
+  process.env.NEXT_PUBLIC_WORDPRESS_API_URL ||
+  "https://noteskartprints.in/graphql";
+
+async function getPosts(): Promise<Post[]> {
+  const res = await fetch(WORDPRESS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: `
+        query GetPosts {
+          posts(first: 10, where: { status: PUBLISH }) {
+            nodes {
+              id
+              title
+              date
+              excerpt
+            }
+          }
+        }
+      `,
+    }),
+    next: { revalidate: 0 },
+  });
+
+  const json = await res.json();
+  return json?.data?.posts?.nodes ?? [];
 }
 
-const GET_POSTS = gql`
-  query GetPosts {
-    posts(first: 10, where: { status: PUBLISH }) {
-      nodes {
-        id
-        title
-        date
-        excerpt
-      }
-    }
-  }
-`;
-
 export default async function Home() {
-  const { data } = await client.query<PostsData>({
-    query: GET_POSTS,
-    context: {
-      fetchOptions: {
-        next: { revalidate: 0 }, // Set to 0 for the demo so you see changes instantly
-      },
-    },
-  });
+  const posts = await getPosts();
 
   return (
     <main className="p-10 max-w-4xl mx-auto bg-slate-50 min-h-screen">
@@ -53,8 +54,8 @@ export default async function Home() {
       </div>
 
       <div className="space-y-4">
-        {data.posts.nodes.length > 0 ? (
-          data.posts.nodes.map((post) => (
+        {posts.length > 0 ? (
+          posts.map((post) => (
             <div
               key={post.id}
               className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all"
