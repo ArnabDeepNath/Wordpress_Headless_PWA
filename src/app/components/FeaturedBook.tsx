@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Book } from "./BookCard";
 
 interface Props {
@@ -27,50 +26,54 @@ export default function FeaturedBook({ book }: Props) {
   const palette = SPINE_COLORS[0];
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+    let ctx: gsap.Context | undefined;
 
-    const ctx = gsap.context(() => {
-      // Cover slides in from left
-      gsap.fromTo(
-        coverRef.current,
-        { x: -90, opacity: 0, rotateY: 20 },
-        {
-          x: 0,
-          opacity: 1,
-          rotateY: 0,
-          duration: 1.3,
-          ease: "power4.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            once: true,
+    import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
+      gsap.registerPlugin(ScrollTrigger);
+
+      ctx = gsap.context(() => {
+        // Cover slides in from left
+        gsap.fromTo(
+          coverRef.current,
+          { x: -90, opacity: 0, rotateY: 20 },
+          {
+            x: 0,
+            opacity: 1,
+            rotateY: 0,
+            duration: 1.3,
+            ease: "power4.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 75%",
+              once: true,
+            },
           },
-        },
-      );
+        );
 
-      // Text children stagger in from right
-      const children = textRef.current
-        ? Array.from(textRef.current.children)
-        : [];
-      gsap.fromTo(
-        children,
-        { x: 70, opacity: 0 },
-        {
-          x: 0,
-          opacity: 1,
-          stagger: 0.11,
-          duration: 0.85,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            once: true,
+        // Text children stagger in from right
+        const children = textRef.current
+          ? Array.from(textRef.current.children)
+          : [];
+        gsap.fromTo(
+          children,
+          { x: 70, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            stagger: 0.11,
+            duration: 0.85,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 70%",
+              once: true,
+            },
           },
-        },
-      );
-    }, sectionRef);
+        );
+      }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    return () => ctx?.revert();
   }, []);
 
   return (
